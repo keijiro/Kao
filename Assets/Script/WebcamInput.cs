@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MediaPipe {
+namespace Kao {
 
 public sealed class WebcamInput : MonoBehaviour
 {
@@ -57,4 +57,4 @@ public sealed class WebcamInput : MonoBehaviour
     #endregion
 }
 
-} // namespace MediaPipe
+} // namespace Kao

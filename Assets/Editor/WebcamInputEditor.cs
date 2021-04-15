@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MediaPipe {
+namespace Kao {
 
 [CustomEditor(typeof(WebcamInput))]
 sealed class WebcamInputEditor : Editor
@@ -50,4 +50,4 @@ sealed class WebcamInputEditor : Editor
     }
 }
 
-} // namespace MediaPipe
+} // namespace Kao
