@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Mathematics;
 using System.Linq;
 using UI = UnityEngine.UI;
 
@@ -52,9 +53,9 @@ public sealed class WebcamTest : MonoBehaviour
         _pipeline.ProcessImage(_webcam.Texture);
 
         // Face mesh (textured surface)
-        var faceMatrix =
-          Matrix4x4.Translate(new Vector2(-0.75f, -0.5f)) *
-          _pipeline.FaceCropMatrix;
+        var faceMatrix = MathUtil.CropMatrix
+          (_pipeline.FaceAngle, _pipeline.FaceCropScale,
+           _pipeline.FaceCropOffset - math.float2(0.75f, 0.5f));
 
         _faceMaterial.SetBuffer("_Vertices", _pipeline.FaceMeshBuffer);
 
@@ -62,9 +63,7 @@ public sealed class WebcamTest : MonoBehaviour
           (_resources.faceMeshTemplate, faceMatrix, _faceMaterial, 0);
 
         // Face mesh (wire)
-        var wireMatrix =
-          Matrix4x4.Translate(new Vector2(0.25f, -0.5f)) *
-          Matrix4x4.Scale(Vector3.one * 0.5f);
+        var wireMatrix = MathUtil.ScaleOffset(0.5f, math.float2(0.25f, -0.5f));
 
         _wireMaterial.SetBuffer("_Vertices", _pipeline.FaceMeshBuffer);
 

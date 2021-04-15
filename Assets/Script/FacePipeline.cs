@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using Unity.Mathematics;
 
 using MediaPipe.BlazeFace;
 using MediaPipe.FaceMesh;
@@ -11,8 +12,17 @@ sealed class FacePipeline : System.IDisposable
 {
     #region Public accessors
 
-    public Matrix4x4 FaceCropMatrix
-      => CalculateFaceCropMatrix();
+    public float FaceAngle
+      => MathUtil.Angle((float2)Face.nose - (float2)Face.mouth);
+
+    public float2 FaceCropScale
+      => (float2)Face.extent * 1.6f;
+
+    public float2 FaceCropOffset
+      => (float2)Face.center - FaceCropScale / 2;
+
+    public float4x4 FaceCropMatrix
+      => MathUtil.CropMatrix(FaceAngle, FaceCropScale, FaceCropOffset);
 
     public Texture CroppedFaceTexture
       => _faceRT;
@@ -82,23 +92,8 @@ sealed class FacePipeline : System.IDisposable
 
     #region Private methods
 
-    Matrix4x4 CalculateFaceCropMatrix()
-    {
-        var face = _faceDetector.Detections.FirstOrDefault();
-
-        var scale = face.extent * 1.6f;
-        var offset = face.center - scale * 0.5f;
-
-        var angle = Vector2.Angle(Vector2.up, face.nose - face.mouth);
-        if (face.nose.x > face.mouth.x) angle = -angle;
-
-        return
-          Matrix4x4.Translate(offset) *
-          Matrix4x4.Scale(new Vector3(scale.x, scale.y, 1)) *
-          Matrix4x4.Translate(new Vector3(0.5f, 0.5f, 0)) *
-          Matrix4x4.Rotate(Quaternion.Euler(0, 0, angle)) *
-          Matrix4x4.Translate(new Vector3(-0.5f, -0.5f, 0));
-    }
+    Detection Face
+      => _faceDetector.Detections.FirstOrDefault();
 
     void RunPipeline(Texture input)
     {
@@ -106,7 +101,7 @@ sealed class FacePipeline : System.IDisposable
         _faceDetector.ProcessImage(input, 0.5f);
 
         // Face region cropping
-        _cropMaterial.SetMatrix("_Xform", CalculateFaceCropMatrix());
+        _cropMaterial.SetMatrix("_Xform", FaceCropMatrix);
         Graphics.Blit(input, _faceRT, _cropMaterial, 0);
 
         // Face landmark detection
