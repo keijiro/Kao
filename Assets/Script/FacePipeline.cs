@@ -92,13 +92,13 @@ sealed class FacePipeline : System.IDisposable
 
     #region Private methods
 
-    Detection Face
+    FaceDetector.Detection Face
       => _faceDetector.Detections.FirstOrDefault();
 
     void RunPipeline(Texture input)
     {
         // Face detection
-        _faceDetector.ProcessImage(input, 0.5f);
+        _faceDetector.ProcessImage(input);
 
         // Face region cropping
         _cropMaterial.SetMatrix("_Xform", FaceCropMatrix);
