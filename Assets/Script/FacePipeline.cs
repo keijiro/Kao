@@ -15,8 +15,8 @@ sealed class FacePipeline : System.IDisposable
     public float FaceAngle
       => MathUtil.Angle((float2)Face.nose - (float2)Face.mouth);
 
-    public float2 FaceCropScale
-      => (float2)Face.extent * 1.6f;
+    public float FaceCropScale
+      => math.length(Face.extent) * 1.2f;
 
     public float2 FaceCropOffset
       => (float2)Face.center - FaceCropScale / 2;
