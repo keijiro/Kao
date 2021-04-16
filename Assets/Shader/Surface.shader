@@ -1,4 +1,4 @@
-Shader "Hidden/MediaPipe/FaceMesh/Surface"
+Shader "Hidden/Kao/Surface"
 {
     CGINCLUDE
 
@@ -6,26 +6,67 @@ Shader "Hidden/MediaPipe/FaceMesh/Surface"
 
     StructuredBuffer<float4> _Vertices;
 
-    void Vertex(uint vid : SV_VertexID,
-                float2 uv : TEXCOORD0,
-                out float4 outVertex : SV_Position,
-                out float2 outUV : TEXCOORD0)
+    void VertexFace(uint vid : SV_VertexID,
+                    float2 uv : TEXCOORD0,
+                    out float4 outVertex : SV_Position,
+                    out float2 outUV : TEXCOORD0)
     {
         outVertex = UnityObjectToClipPos(_Vertices[vid]);
         outUV = uv;
     }
 
-    float4 Fragment(float4 vertex : SV_Position,
-                    float2 uv : TEXCOORD0) : SV_Target
+    float4 FragmentFace(float4 vertex : SV_Position,
+                        float2 uv : TEXCOORD0) : SV_Target
     {
         const float repeat = 20;
         const float width = 2;
 
-        float2 g = abs(0.5 - frac(uv * repeat));
-        g = 1 - saturate(g / (fwidth(uv * repeat) * width));
-        float a = max(g.x, g.y);
+        float2 ct = abs(0.5 - frac(uv * repeat));
+        ct = 1 - saturate(ct / (fwidth(uv * repeat) * width));
+        float y = max(ct.x, ct.y);
 
-        return float4(a, a, a, 1);
+        float dist = length((uv - 0.5) * 2.2);
+        float a = (1 - smoothstep(0.5, 1, dist)) * 0.7;
+
+        return float4(y, y, y, a);
+    }
+
+    float4x4 _EyeXForm;
+
+    void VertexEye(uint vid : SV_VertexID,
+                   out float4 position : SV_Position,
+                   out float4 color : COLOR)
+    {
+        if (vid < 32)
+        {
+            const int indices[] =
+            {
+                0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6, 7, 7, 8,
+                8, 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 0
+            };
+
+            float2 p = _Vertices[indices[vid] + 5].xy - 0.0;
+
+            position = UnityObjectToClipPos(mul(_EyeXForm, float4(p, 0, 1)));
+            color = float4(0, 1, 1, 1);
+        }
+        else
+        {
+            float2 c = _Vertices[0].xy;
+            float r = distance(_Vertices[1].xy, _Vertices[3].xy) / 2;
+
+            float phi = UNITY_PI * 2 * (vid / 2 + (vid & 1) - 16) / 15;
+            float2 p = c + float2(cos(phi), sin(phi)) * r - 0.0;
+
+            position = UnityObjectToClipPos(mul(_EyeXForm, float4(p, 0, 1)));
+            color = float4(1, 1, 0, 1);
+        }
+    }
+
+    float4 FragmentEye(float4 position : SV_Position,
+                       float4 color : COLOR) : SV_Target
+    {
+        return color;
     }
 
     ENDCG
@@ -37,8 +78,16 @@ Shader "Hidden/MediaPipe/FaceMesh/Surface"
         Pass
         {
             CGPROGRAM
-            #pragma vertex Vertex
-            #pragma fragment Fragment
+            #pragma vertex VertexFace
+            #pragma fragment FragmentFace
+            ENDCG
+        }
+        Pass
+        {
+            ZTest Always
+            CGPROGRAM
+            #pragma vertex VertexEye
+            #pragma fragment FragmentEye
             ENDCG
         }
     }

@@ -10,7 +10,7 @@ namespace Kao {
 
 sealed class FacePipeline : System.IDisposable
 {
-    #region Public accessors
+    #region Public face detection accessors
 
     public float FaceAngle
       => MathUtil.Angle((float2)Face.nose - (float2)Face.mouth);
@@ -27,8 +27,33 @@ sealed class FacePipeline : System.IDisposable
     public Texture CroppedFaceTexture
       => _faceRT;
 
-    public ComputeBuffer FaceMeshBuffer
+    public ComputeBuffer FaceVertexBuffer
       => _meshBuilder.VertexBuffer;
+
+    #endregion
+
+    #region Public eye detection accessors
+
+    public float EyeCropScale
+      => math.distance(Face.leftEye, Face.rightEye) * 0.9f;
+
+    public float2 LeftEyeCropOffset
+      => (float2)Face.leftEye - EyeCropScale / 2;
+
+    public float2 RightEyeCropOffset
+      => (float2)Face.rightEye - EyeCropScale / 2;
+
+    public float4x4 LeftEyeCropMatrix
+      => MathUtil.CropMatrix(FaceAngle, EyeCropScale, LeftEyeCropOffset);
+
+    public float4x4 RightEyeCropMatrix
+      => MathUtil.CropMatrix(FaceAngle, EyeCropScale, RightEyeCropOffset);
+
+    public ComputeBuffer LeftEyeVertexBuffer
+      => _irisDetectorL.VertexBuffer;
+
+    public ComputeBuffer RightEyeVertexBuffer
+      => _irisDetectorR.VertexBuffer;
 
     #endregion
 
@@ -50,8 +75,9 @@ sealed class FacePipeline : System.IDisposable
     ResourceSet _resources;
 
     FaceDetector _faceDetector;
-    IrisDetector _irisDetector;
     FaceMeshBuilder _meshBuilder;
+    IrisDetector _irisDetectorL;
+    IrisDetector _irisDetectorR;
 
     Material _cropMaterial;
 
@@ -67,8 +93,9 @@ sealed class FacePipeline : System.IDisposable
         _resources = resources;
 
         _faceDetector = new FaceDetector(_resources.blazeFace);
-        _irisDetector = new IrisDetector(_resources.iris);
         _meshBuilder = new FaceMeshBuilder(_resources.faceMesh);
+        _irisDetectorL = new IrisDetector(_resources.iris);
+        _irisDetectorR = new IrisDetector(_resources.iris);
 
         _cropMaterial = new Material(_resources.cropShader);
 
@@ -79,8 +106,9 @@ sealed class FacePipeline : System.IDisposable
     void DeallocateObjects()
     {
         _faceDetector.Dispose();
-        _irisDetector.Dispose();
         _meshBuilder.Dispose();
+        _irisDetectorL.Dispose();
+        _irisDetectorR.Dispose();
 
         Object.Destroy(_cropMaterial);
 
@@ -106,6 +134,20 @@ sealed class FacePipeline : System.IDisposable
 
         // Face landmark detection
         _meshBuilder.ProcessImage(_faceRT);
+
+        // Eye region cropping (left)
+        _cropMaterial.SetMatrix("_Xform", LeftEyeCropMatrix);
+        Graphics.Blit(input, _irisRT, _cropMaterial, 0);
+
+        // Iris landmark detection (left)
+        _irisDetectorL.ProcessImage(_irisRT);
+
+        // Eye region cropping (right)
+        _cropMaterial.SetMatrix("_Xform", RightEyeCropMatrix);
+        Graphics.Blit(input, _irisRT, _cropMaterial, 0);
+
+        // Iris landmark detection (right)
+        _irisDetectorR.ProcessImage(_irisRT);
     }
 
     #endregion

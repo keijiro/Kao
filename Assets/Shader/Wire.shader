@@ -1,4 +1,4 @@
-Shader "Hidden/MediaPipe/FaceMesh/Wire"
+Shader "Hidden/Kao/Wire"
 {
     CGINCLUDE
 
@@ -6,14 +6,48 @@ Shader "Hidden/MediaPipe/FaceMesh/Wire"
 
     StructuredBuffer<float4> _Vertices;
 
-    float4 Vertex(uint vid : SV_VertexID) : SV_Position
+    void VertexFace(uint vid : SV_VertexID,
+                    out float4 position : SV_Position,
+                    out float4 color : COLOR)
     {
-        return UnityObjectToClipPos(_Vertices[vid]);
+        position = UnityObjectToClipPos(_Vertices[vid]);
+        color = float4(1, 1, 1, 0.8);
     }
 
-    float4 Fragment(float4 vertex : SV_Position) : SV_Target
+    void VertexEye(uint vid : SV_VertexID,
+                   out float4 position : SV_Position,
+                   out float4 color : COLOR)
     {
-        return float4(1, 1, 1, 0.8);
+        if (vid < 32)
+        {
+            const int indices[] =
+            {
+                0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6, 7, 7, 8,
+                8, 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 0
+            };
+
+            float2 p = _Vertices[indices[vid] + 5].xy - 0.5;
+
+            position = UnityObjectToClipPos(float4(p, 0, 1));
+            color = float4(0, 1, 1, 1);
+        }
+        else
+        {
+            float2 c = _Vertices[0].xy;
+            float r = distance(_Vertices[1].xy, _Vertices[3].xy) / 2;
+
+            float phi = UNITY_PI * 2 * (vid / 2 + (vid & 1) - 16) / 15;
+            float2 p = c + float2(cos(phi), sin(phi)) * r - 0.5;
+
+            position = UnityObjectToClipPos(float4(p, 0, 1));
+            color = float4(1, 1, 0, 1);
+        }
+    }
+
+    float4 Fragment(float4 position : SV_Position,
+                    float4 color : COLOR) : SV_Target
+    {
+        return color;
     }
 
     ENDCG
@@ -25,7 +59,14 @@ Shader "Hidden/MediaPipe/FaceMesh/Wire"
         Pass
         {
             CGPROGRAM
-            #pragma vertex Vertex
+            #pragma vertex VertexFace
+            #pragma fragment Fragment
+            ENDCG
+        }
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex VertexEye
             #pragma fragment Fragment
             ENDCG
         }

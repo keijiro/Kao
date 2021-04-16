@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311915, g: 0.3807396, b: 0.35872662, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -547,8 +547,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _webcam: {fileID: 2010591764}
   _resources: {fileID: 11400000, guid: 7dea2325d80e6af469e5633ac60efaea, type: 2}
-  _faceTexture: {fileID: 2800000, guid: 08707d5c61af48c4c81c1f9fd3386c8c, type: 3}
-  _faceShader: {fileID: 4800000, guid: cc0a1120a03754a469d6ac7f6cfe4947, type: 3}
+  _surfaceShader: {fileID: 4800000, guid: cc0a1120a03754a469d6ac7f6cfe4947, type: 3}
   _wireShader: {fileID: 4800000, guid: c16b1636d246e1d48b47645c695faa99, type: 3}
   _mainUI: {fileID: 1554034519}
   _cropUI: {fileID: 213073568}
@@ -565,7 +564,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72730bf354752f54f987500737914501, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _deviceName: 
+  _deviceName: Video Assist 7" 12G HDR
   _resolution: {x: 1080, y: 1080}
 --- !u!4 &2010591765
 Transform:

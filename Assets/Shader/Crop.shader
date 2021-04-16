@@ -1,4 +1,4 @@
-Shader "Hidden/MediaPipe/FaceMesh/Crop"
+Shader "Hidden/Kao/Crop"
 {
     Properties
     {
