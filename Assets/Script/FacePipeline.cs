@@ -25,7 +25,7 @@ sealed class FacePipeline : System.IDisposable
       => MathUtil.CropMatrix(FaceAngle, FaceCropScale, FaceCropOffset);
 
     public Texture CroppedFaceTexture
-      => _faceRT;
+      => _faceCrop;
 
     public ComputeBuffer FaceVertexBuffer
       => _meshBuilder.VertexBuffer;
@@ -48,6 +48,12 @@ sealed class FacePipeline : System.IDisposable
 
     public float4x4 RightEyeCropMatrix
       => MathUtil.CropMatrix(FaceAngle, EyeCropScale, RightEyeCropOffset);
+
+    public Texture CroppedLeftEyeTexture
+      => _irisCropL;
+
+    public Texture CroppedRightEyeTexture
+      => _irisCropR;
 
     public ComputeBuffer LeftEyeVertexBuffer
       => _irisDetectorL.VertexBuffer;
@@ -81,8 +87,9 @@ sealed class FacePipeline : System.IDisposable
 
     Material _cropMaterial;
 
-    RenderTexture _faceRT;
-    RenderTexture _irisRT;
+    RenderTexture _faceCrop;
+    RenderTexture _irisCropL;
+    RenderTexture _irisCropR;
 
     #endregion
 
@@ -99,8 +106,9 @@ sealed class FacePipeline : System.IDisposable
 
         _cropMaterial = new Material(_resources.cropShader);
 
-        _faceRT = new RenderTexture(192, 192, 0);
-        _irisRT = new RenderTexture(64, 64, 0);
+        _faceCrop = new RenderTexture(192, 192, 0);
+        _irisCropL = new RenderTexture(64, 64, 0);
+        _irisCropR = new RenderTexture(64, 64, 0);
     }
 
     void DeallocateObjects()
@@ -112,8 +120,9 @@ sealed class FacePipeline : System.IDisposable
 
         Object.Destroy(_cropMaterial);
 
-        Object.Destroy(_faceRT);
-        Object.Destroy(_irisRT);
+        Object.Destroy(_faceCrop);
+        Object.Destroy(_irisCropL);
+        Object.Destroy(_irisCropR);
     }
 
     #endregion
@@ -130,24 +139,24 @@ sealed class FacePipeline : System.IDisposable
 
         // Face region cropping
         _cropMaterial.SetMatrix("_Xform", FaceCropMatrix);
-        Graphics.Blit(input, _faceRT, _cropMaterial, 0);
+        Graphics.Blit(input, _faceCrop, _cropMaterial, 0);
 
         // Face landmark detection
-        _meshBuilder.ProcessImage(_faceRT);
+        _meshBuilder.ProcessImage(_faceCrop);
 
         // Eye region cropping (left)
         _cropMaterial.SetMatrix("_Xform", LeftEyeCropMatrix);
-        Graphics.Blit(input, _irisRT, _cropMaterial, 0);
+        Graphics.Blit(input, _irisCropL, _cropMaterial, 0);
 
         // Iris landmark detection (left)
-        _irisDetectorL.ProcessImage(_irisRT);
+        _irisDetectorL.ProcessImage(_irisCropL);
 
         // Eye region cropping (right)
         _cropMaterial.SetMatrix("_Xform", RightEyeCropMatrix);
-        Graphics.Blit(input, _irisRT, _cropMaterial, 0);
+        Graphics.Blit(input, _irisCropR, _cropMaterial, 0);
 
         // Iris landmark detection (right)
-        _irisDetectorR.ProcessImage(_irisRT);
+        _irisDetectorR.ProcessImage(_irisCropR);
     }
 
     #endregion
