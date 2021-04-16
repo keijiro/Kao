@@ -30,6 +30,9 @@ sealed class FacePipeline : System.IDisposable
     public ComputeBuffer FaceVertexBuffer
       => _faceMesh.VertexBuffer;
 
+    public ComputeBuffer RefinedFaceVertexBuffer
+      => _refineBuffer;
+
     #endregion
 
     #region Public eye detection accessors
@@ -91,6 +94,9 @@ sealed class FacePipeline : System.IDisposable
     RenderTexture _irisCropL;
     RenderTexture _irisCropR;
 
+    ComputeBuffer _refineBuffer;
+    ComputeBuffer _eyeToFace;
+
     #endregion
 
     #region Object allocation/deallocation
@@ -109,6 +115,10 @@ sealed class FacePipeline : System.IDisposable
         _faceCrop = new RenderTexture(192, 192, 0);
         _irisCropL = new RenderTexture(64, 64, 0);
         _irisCropR = new RenderTexture(64, 64, 0);
+
+        _refineBuffer = new ComputeBuffer(FaceLandmarkDetector.VertexCount,
+                                          sizeof(float) * 4);
+        _eyeToFace = IndexTable.CreateEyeToFaceLandmarkBuffer();
     }
 
     void DeallocateObjects()
@@ -123,6 +133,9 @@ sealed class FacePipeline : System.IDisposable
         Object.Destroy(_faceCrop);
         Object.Destroy(_irisCropL);
         Object.Destroy(_irisCropR);
+
+        _refineBuffer.Dispose();
+        _eyeToFace.Dispose();
     }
 
     #endregion
@@ -157,6 +170,41 @@ sealed class FacePipeline : System.IDisposable
 
         // Iris landmark detection (right)
         _irisMeshR.ProcessImage(_irisCropR);
+
+        // Face landmark refinement
+        var refine = _resources.refinementCompute;
+
+        refine.SetBuffer(0, "_FaceVertices", _faceMesh.VertexBuffer);
+        refine.SetBuffer(0, "_RefineBuffer", _refineBuffer);
+        refine.SetMatrix("_FaceXForm", FaceCropMatrix);
+        refine.Dispatch(0, FaceLandmarkDetector.VertexCount / 52, 1, 1);
+
+        refine.SetBuffer(1, "_EyeToFaceTable", _eyeToFace);
+        refine.SetBuffer(1, "_EyeVerticesL", _irisMeshL.VertexBuffer);
+        refine.SetBuffer(1, "_EyeVerticesR", _irisMeshR.VertexBuffer);
+        refine.SetMatrix("_EyeXFormL", LeftEyeCropMatrix);
+        refine.SetMatrix("_EyeXFormR", RightEyeCropMatrix);
+        refine.SetBuffer(1, "_RefineBuffer", _refineBuffer);
+        refine.Dispatch(1, 1, 1, 1);
+
+
+
+
+        /*
+
+        refine.SetMatrix("_EyeXFormL", 
+          math.mul(math.mul(float4x4.Translate(math.float3(-FaceCropOffset, 0)),
+                            float4x4.Scale(1 / FaceCropScale)),
+                   math.mul(float4x4.Translate(math.float3(LeftEyeCropOffset, 0)),
+                            float4x4.Scale(EyeCropScale))));
+
+          //MathUtil.CropMatrix(0, EyeCropScale / FaceCropScale,
+                              //LeftEyeCropOffset - FaceCropOffset));
+
+        //refine.SetMatrix("_EyeXFormR", 
+          //MathUtil.CropMatrix(0, EyeCropScale / FaceCropScale,
+           //                   RightEyeCropOffset - FaceCropOffset));
+        */
     }
 
     #endregion

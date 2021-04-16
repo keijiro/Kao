@@ -637,7 +637,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72730bf354752f54f987500737914501, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _deviceName: Video Assist 7" 12G HDR
+  _deviceName: 
   _resolution: {x: 1080, y: 1080}
 --- !u!4 &2010591765
 Transform:

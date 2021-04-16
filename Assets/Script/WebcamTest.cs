@@ -58,10 +58,11 @@ public sealed class WebcamTest : MonoBehaviour
         // Main view overlays
 
         // Face mesh
-        var mF = MathUtil.CropMatrix
+        var mF = /*MathUtil.CropMatrix
           (_pipeline.FaceAngle, _pipeline.FaceCropScale,
-           _pipeline.FaceCropOffset - math.float2(0.75f, 0.5f));
-        _material.SetBuffer("_Vertices", _pipeline.FaceVertexBuffer);
+           _pipeline.FaceCropOffset - math.float2(0.75f, 0.5f));*/
+           float4x4.Translate(math.float3(-0.75f, -0.5f, 0));
+        _material.SetBuffer("_Vertices", _pipeline.RefinedFaceVertexBuffer);
         _material.SetPass(0);
         Graphics.DrawMeshNow(_resources.faceMeshTemplate, mF);
 
