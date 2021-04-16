@@ -12,8 +12,7 @@ public sealed class WebcamTest : MonoBehaviour
     [SerializeField] WebcamInput _webcam = null;
     [SerializeField] ResourceSet _resources = null;
     [Space]
-    [SerializeField] Shader _surfaceShader = null;
-    [SerializeField] Shader _wireShader = null;
+    [SerializeField] Shader _shader = null;
     [Space]
     [SerializeField] UI.RawImage _mainUI = null;
     [SerializeField] UI.RawImage _faceUI = null;
@@ -25,8 +24,7 @@ public sealed class WebcamTest : MonoBehaviour
     #region Private members
 
     FacePipeline _pipeline;
-    Material _surfaceMaterial;
-    Material _wireMaterial;
+    Material _material;
 
     #endregion
 
@@ -35,15 +33,13 @@ public sealed class WebcamTest : MonoBehaviour
     void Start()
     {
         _pipeline = new FacePipeline(_resources);
-        _surfaceMaterial = new Material(_surfaceShader);
-        _wireMaterial = new Material(_wireShader);
+        _material = new Material(_shader);
     }
 
     void OnDestroy()
     {
         _pipeline.Dispose();
-        Destroy(_surfaceMaterial);
-        Destroy(_wireMaterial);
+        Destroy(_material);
     }
 
     void LateUpdate()
@@ -59,42 +55,55 @@ public sealed class WebcamTest : MonoBehaviour
 
     void OnRenderObject()
     {
-        // Face mesh (main)
-        var faceMatrix = MathUtil.CropMatrix
+        // Main view overlays
+
+        // Face mesh
+        var mF = MathUtil.CropMatrix
           (_pipeline.FaceAngle, _pipeline.FaceCropScale,
            _pipeline.FaceCropOffset - math.float2(0.75f, 0.5f));
-        _surfaceMaterial.SetBuffer("_Vertices", _pipeline.FaceVertexBuffer);
-        _surfaceMaterial.SetPass(0);
-        Graphics.DrawMeshNow(_resources.faceMeshTemplate, faceMatrix);
+        _material.SetBuffer("_Vertices", _pipeline.FaceVertexBuffer);
+        _material.SetPass(0);
+        Graphics.DrawMeshNow(_resources.faceMeshTemplate, mF);
 
-        // Left eye (main)
-        var leftEyeMatrix = MathUtil.CropMatrix
-          (_pipeline.FaceAngle, _pipeline.EyeCropScale,
-           _pipeline.LeftEyeCropOffset - math.float2(0.75f, 0.5f));
-
-        _surfaceMaterial.SetMatrix("_EyeXForm", leftEyeMatrix);
-        _surfaceMaterial.SetBuffer("_Vertices", _pipeline.LeftEyeVertexBuffer);
-        _surfaceMaterial.SetPass(1);
-        Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
-
-        // Right eye (main)
-        var rightEyeMatrix = MathUtil.CropMatrix
+        // Right eye
+        var mRE = MathUtil.CropMatrix
           (_pipeline.FaceAngle, _pipeline.EyeCropScale,
            _pipeline.RightEyeCropOffset - math.float2(0.75f, 0.5f));
-
-        _surfaceMaterial.SetMatrix("_EyeXForm", rightEyeMatrix);
-        _surfaceMaterial.SetBuffer("_Vertices", _pipeline.RightEyeVertexBuffer);
-        _surfaceMaterial.SetPass(1);
+        _material.SetMatrix("_XForm", mRE);
+        _material.SetBuffer("_Vertices", _pipeline.RightEyeVertexBuffer);
+        _material.SetPass(2);
         Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
 
-        // Wireframe face mesh
-        // Over
-        var wireFaceMtx = MathUtil.ScaleOffset(0.5f, math.float2(0.25f, 0));
-        _wireMaterial.SetBuffer("_Vertices", _pipeline.FaceVertexBuffer);
-        _wireMaterial.SetPass(0);
-        Graphics.DrawMeshNow(_resources.faceLineTemplate, wireFaceMtx);
+        // Left eye
+        var mLE = MathUtil.CropMatrix
+          (_pipeline.FaceAngle, _pipeline.EyeCropScale,
+           _pipeline.LeftEyeCropOffset - math.float2(0.75f, 0.5f));
+        _material.SetMatrix("_XForm", mLE);
+        _material.SetBuffer("_Vertices", _pipeline.LeftEyeVertexBuffer);
+        _material.SetPass(2);
+        Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
 
-        // Wireframe 
+        // Debug views
+
+        // Face mesh
+        var dF = MathUtil.ScaleOffset(0.5f, math.float2(0.25f, 0));
+        _material.SetBuffer("_Vertices", _pipeline.FaceVertexBuffer);
+        _material.SetPass(1);
+        Graphics.DrawMeshNow(_resources.faceLineTemplate, dF);
+
+        // Right eye
+        var dRE = MathUtil.ScaleOffset(0.25f, math.float2(0.25f, -0.25f));
+        _material.SetMatrix("_XForm", dRE);
+        _material.SetBuffer("_Vertices", _pipeline.RightEyeVertexBuffer);
+        _material.SetPass(3);
+        Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
+
+        // Left eye
+        var dLE = MathUtil.ScaleOffset(0.25f, math.float2(0.5f, -0.25f));
+        _material.SetMatrix("_XForm", dLE);
+        _material.SetBuffer("_Vertices", _pipeline.LeftEyeVertexBuffer);
+        _material.SetPass(3);
+        Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
     }
 
     #endregion

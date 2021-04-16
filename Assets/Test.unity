@@ -620,8 +620,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _webcam: {fileID: 2010591764}
   _resources: {fileID: 11400000, guid: 7dea2325d80e6af469e5633ac60efaea, type: 2}
-  _surfaceShader: {fileID: 4800000, guid: cc0a1120a03754a469d6ac7f6cfe4947, type: 3}
-  _wireShader: {fileID: 4800000, guid: c16b1636d246e1d48b47645c695faa99, type: 3}
+  _shader: {fileID: 4800000, guid: cc0a1120a03754a469d6ac7f6cfe4947, type: 3}
   _mainUI: {fileID: 1554034519}
   _faceUI: {fileID: 213073568}
   _leftEyeUI: {fileID: 921047780}

@@ -1,10 +1,18 @@
-Shader "Hidden/Kao/Surface"
+Shader "Hidden/Kao"
 {
     CGINCLUDE
 
     #include "UnityCG.cginc"
 
+    //
+    // Common uniforms
+    //
     StructuredBuffer<float4> _Vertices;
+    float4x4 _XForm;
+
+    //
+    // Vertex shader for face mesh
+    //
 
     void VertexFace(uint vid : SV_VertexID,
                     float2 uv : TEXCOORD0,
@@ -15,8 +23,13 @@ Shader "Hidden/Kao/Surface"
         outUV = uv;
     }
 
-    float4 FragmentFace(float4 vertex : SV_Position,
-                        float2 uv : TEXCOORD0) : SV_Target
+    //
+    // Fragment shaders for face mesh
+    //
+
+    // For main view
+    float4 FragmentFaceMain(float4 vertex : SV_Position,
+                            float2 uv : TEXCOORD0) : SV_Target
     {
         const float repeat = 20;
         const float width = 2;
@@ -31,7 +44,15 @@ Shader "Hidden/Kao/Surface"
         return float4(y, y, y, a);
     }
 
-    float4x4 _EyeXForm;
+    // For debug view
+    float4 FragmentFaceDebug(float4 position : SV_Position) : SV_Target
+    {
+        return float4(1, 1, 1, 0.8);
+    }
+
+    //
+    // Vertex shader for iris landmarks
+    //
 
     void VertexEye(uint vid : SV_VertexID,
                    out float4 position : SV_Position,
@@ -45,9 +66,9 @@ Shader "Hidden/Kao/Surface"
                 8, 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 0
             };
 
-            float2 p = _Vertices[indices[vid] + 5].xy - 0.0;
+            float2 p = _Vertices[indices[vid] + 5].xy;
 
-            position = UnityObjectToClipPos(mul(_EyeXForm, float4(p, 0, 1)));
+            position = UnityObjectToClipPos(mul(_XForm, float4(p, 0, 1)));
             color = float4(0, 1, 1, 1);
         }
         else
@@ -56,15 +77,27 @@ Shader "Hidden/Kao/Surface"
             float r = distance(_Vertices[1].xy, _Vertices[3].xy) / 2;
 
             float phi = UNITY_PI * 2 * (vid / 2 + (vid & 1) - 16) / 15;
-            float2 p = c + float2(cos(phi), sin(phi)) * r - 0.0;
+            float2 p = c + float2(cos(phi), sin(phi)) * r;
 
-            position = UnityObjectToClipPos(mul(_EyeXForm, float4(p, 0, 1)));
+            position = UnityObjectToClipPos(mul(_XForm, float4(p, 0, 1)));
             color = float4(1, 1, 0, 1);
         }
     }
 
-    float4 FragmentEye(float4 position : SV_Position,
-                       float4 color : COLOR) : SV_Target
+    //
+    // Fragment shaders for iris landmarks
+    //
+
+    // For main view
+    float4 FragmentEyeMain(float4 position : SV_Position,
+                           float4 color : COLOR) : SV_Target
+    {
+        return color;
+    }
+
+    // For debug view
+    float4 FragmentEyeDebug(float4 position : SV_Position,
+                            float4 color : COLOR) : SV_Target
     {
         return color;
     }
@@ -79,7 +112,14 @@ Shader "Hidden/Kao/Surface"
         {
             CGPROGRAM
             #pragma vertex VertexFace
-            #pragma fragment FragmentFace
+            #pragma fragment FragmentFaceMain
+            ENDCG
+        }
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex VertexFace
+            #pragma fragment FragmentFaceDebug
             ENDCG
         }
         Pass
@@ -87,7 +127,15 @@ Shader "Hidden/Kao/Surface"
             ZTest Always
             CGPROGRAM
             #pragma vertex VertexEye
-            #pragma fragment FragmentEye
+            #pragma fragment FragmentEyeMain
+            ENDCG
+        }
+        Pass
+        {
+            ZTest Always
+            CGPROGRAM
+            #pragma vertex VertexEye
+            #pragma fragment FragmentEyeDebug
             ENDCG
         }
     }
