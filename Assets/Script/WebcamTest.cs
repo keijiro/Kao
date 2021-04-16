@@ -12,7 +12,6 @@ public sealed class WebcamTest : MonoBehaviour
     [SerializeField] WebcamInput _webcam = null;
     [SerializeField] ResourceSet _resources = null;
     [Space]
-    [SerializeField] Texture _faceTexture = null;
     [SerializeField] Shader _faceShader = null;
     [SerializeField] Shader _wireShader = null;
     [Space]
@@ -37,8 +36,6 @@ public sealed class WebcamTest : MonoBehaviour
         _pipeline = new FacePipeline(_resources);
         _faceMaterial = new Material(_faceShader);
         _wireMaterial = new Material(_wireShader);
-
-        _faceMaterial.mainTexture = _faceTexture;
     }
 
     void OnDestroy()
