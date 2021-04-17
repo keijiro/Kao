@@ -6,17 +6,21 @@ using MediaPipe.BlazeFace;
 using MediaPipe.FaceMesh;
 using MediaPipe.Iris;
 
+//
+// Heavily under construction. Cluttered like hell. Don't try to read.
+//
+
 namespace Kao {
 
 sealed class FacePipeline : System.IDisposable
 {
-    #region Public face detection accessors
+    #region Public face accessors
 
     public float FaceAngle
-      => MathUtil.Angle((float2)Face.nose - (float2)Face.mouth);
+      => _usePrev ? _prevFaceAngle : MathUtil.Angle((float2)Face.nose - (float2)Face.mouth) - math.PI / 2;
 
     public float FaceCropScale
-      => math.length(Face.extent) * 1.2f;
+      => _usePrev ? _prevFaceScale : math.length(Face.extent) * 1.2f;
 
     public float2 FaceCropOffset
       => (float2)Face.center - FaceCropScale / 2;
@@ -35,23 +39,58 @@ sealed class FacePipeline : System.IDisposable
 
     #endregion
 
-    #region Public eye detection accessors
+    public float2 NoseTip
+      => math.mul(FaceCropMatrix, math.float4(_faceMesh.VertexArray.ElementAt(1))).xy;
 
-    public float EyeCropScale
-      => math.distance(Face.leftEye, Face.rightEye) * 1.5f;
+    public float2 MidwayBetweenEyes
+      => math.mul(FaceCropMatrix, math.float4(_faceMesh.VertexArray.ElementAt(168))).xy;
+
+    public float2 GetLeftEyeBoundaryPoint(int i)
+      => math.mul(FaceCropMatrix, math.float4(_faceMesh.VertexArray.ElementAt(i == 0 ? 33 : 133))).xy;
+
+    public float2 GetRightEyeBoundaryPoint(int i)
+      => math.mul(FaceCropMatrix, math.float4(_faceMesh.VertexArray.ElementAt(i == 0 ? 362 : 263))).xy;
+
+    #region Public left eye accessors
+
+    public float LeftEyeAngle
+      => FaceAngle;
+      //=> MathUtil.Angle(GetLeftEyeBoundaryPoint(1) -
+                        //GetLeftEyeBoundaryPoint(0));
+
+    public float LeftEyeCropScale
+      => math.distance(GetLeftEyeBoundaryPoint(0),
+                       GetLeftEyeBoundaryPoint(1)) * 2.5f;
 
     public float2 LeftEyeCropOffset
-      => (float2)Face.leftEye - EyeCropScale / 2;
+      => (GetLeftEyeBoundaryPoint(0) + GetLeftEyeBoundaryPoint(1)) / 2 - LeftEyeCropScale / 2;
+
+    #endregion
+
+    #region Public right eye accessors
+
+    public float RightEyeAngle
+      => -FaceAngle;
+      //=> MathUtil.Angle(GetRightEyeBoundaryPoint(1) -
+       //                 GetRightEyeBoundaryPoint(0));
+
+    public float RightEyeCropScale
+      => math.distance(GetRightEyeBoundaryPoint(0),
+                       GetRightEyeBoundaryPoint(1)) * 2.5f;
 
     public float2 RightEyeCropOffset
-      => (float2)Face.rightEye - EyeCropScale / 2;
+      => (GetRightEyeBoundaryPoint(0) + GetRightEyeBoundaryPoint(1)) / 2 - RightEyeCropScale / 2;
+
+    #endregion
+
+    #region Public eye detection accessors
 
     public float4x4 LeftEyeCropMatrix
-      => MathUtil.CropMatrix(FaceAngle, EyeCropScale, LeftEyeCropOffset);
+      => MathUtil.CropMatrix(LeftEyeAngle, LeftEyeCropScale, LeftEyeCropOffset);
 
     public float4x4 RightEyeCropMatrix
       => math.mul(
-                  MathUtil.CropMatrix(-FaceAngle, EyeCropScale, RightEyeCropOffset),
+                  MathUtil.CropMatrix(-RightEyeAngle, RightEyeCropScale, RightEyeCropOffset),
 math.mul(float4x4.Translate(math.float3(1, 0, 0)), float4x4.Scale(math.float3(-1, 1, 1)))
                   );
 
@@ -148,8 +187,14 @@ math.mul(float4x4.Translate(math.float3(1, 0, 0)), float4x4.Scale(math.float3(-1
     FaceDetector.Detection Face
       => _faceDetector.Detections.FirstOrDefault();
 
+    bool _usePrev;
+    float _prevFaceAngle;
+    float _prevFaceScale;
+
     void RunPipeline(Texture input)
     {
+        if (Time.frameCount < 10) _usePrev = false;
+
         // Face detection
         _faceDetector.ProcessImage(input);
 
@@ -189,6 +234,20 @@ math.mul(float4x4.Translate(math.float3(1, 0, 0)), float4x4.Scale(math.float3(-1
         refine.SetMatrix("_EyeXFormR", RightEyeCropMatrix);
         refine.SetBuffer(1, "_RefineBuffer", _refineBuffer);
         refine.Dispatch(1, 1, 1, 1);
+
+        var angle = MathUtil.Angle(MidwayBetweenEyes - NoseTip) - math.PI / 2;
+        var scale = 1 / FaceCropScale * math.distance(MidwayBetweenEyes.xy, NoseTip.xy) * 3.0f;
+        if (_usePrev)
+        {
+            _prevFaceAngle = math.lerp(_prevFaceAngle, angle, 0.2f);
+            _prevFaceScale = math.lerp(_prevFaceScale, scale, 0.2f);
+        }
+        else
+        {
+            _prevFaceAngle = angle;
+            _prevFaceScale = scale;
+            _usePrev = true;
+        }
 
 
 

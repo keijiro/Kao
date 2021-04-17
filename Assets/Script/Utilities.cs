@@ -8,8 +8,16 @@ static class MathUtil
       (float4x4 m1, float4x4 m2, float4x4 m3)
       => math.mul(math.mul(m1, m2), m3);
 
+    public static float4x4 Mul
+      (float4x4 m1, float4x4 m2, float4x4 m3, float4x4 m4)
+      => math.mul(math.mul(math.mul(m1, m2), m3), m4);
+
+    public static float4x4 Mul
+      (float4x4 m1, float4x4 m2, float4x4 m3, float4x4 m4, float4x4 m5)
+      => math.mul(math.mul(math.mul(math.mul(m1, m2), m3), m4), m5);
+
     public static float Angle(float2 v)
-      => math.atan2(v.y, v.x) - math.PI / 2;
+      => math.atan2(v.y, v.x);
 
     public static float4x4 ZRotateAtCenter(float angle)
       => Mul(float4x4.Translate(math.float3(0.5f, 0.5f, 0)),
