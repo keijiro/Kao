@@ -38,7 +38,7 @@ sealed class FacePipeline : System.IDisposable
     #region Public eye detection accessors
 
     public float EyeCropScale
-      => math.distance(Face.leftEye, Face.rightEye) * 0.9f;
+      => math.distance(Face.leftEye, Face.rightEye) * 1.5f;
 
     public float2 LeftEyeCropOffset
       => (float2)Face.leftEye - EyeCropScale / 2;
@@ -50,7 +50,10 @@ sealed class FacePipeline : System.IDisposable
       => MathUtil.CropMatrix(FaceAngle, EyeCropScale, LeftEyeCropOffset);
 
     public float4x4 RightEyeCropMatrix
-      => MathUtil.CropMatrix(FaceAngle, EyeCropScale, RightEyeCropOffset);
+      => math.mul(
+                  MathUtil.CropMatrix(-FaceAngle, EyeCropScale, RightEyeCropOffset),
+math.mul(float4x4.Translate(math.float3(1, 0, 0)), float4x4.Scale(math.float3(-1, 1, 1)))
+                  );
 
     public Texture CroppedLeftEyeTexture
       => _irisCropL;

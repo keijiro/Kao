@@ -27,6 +27,6 @@ void MapEyeToFace(uint id : SV_DispatchThreadID)
     uint i_l = _EyeToFaceTable[id];
     uint i_r = _EyeToFaceTable[id + EYE_VERTEX_COUNT];
 
-    _RefineBuffer[i_r] = mul(_EyeXFormL, float4(1, 0, 0, 0) + float4(-1, 1, 1, 1) * float4(_EyeVerticesL[id + 5].xy, 0, 1));
-    _RefineBuffer[i_l] = mul(_EyeXFormR, float4(_EyeVerticesR[id + 5].xy, 0, 1));
+    _RefineBuffer[i_l] = mul(_EyeXFormL, float4(_EyeVerticesL[id + 5].xy, 0, 1));
+    _RefineBuffer[i_r] = mul(_EyeXFormR, float4(_EyeVerticesR[id + 5].xy, 0, 1));
 }

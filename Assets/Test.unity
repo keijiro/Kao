@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311915, g: 0.3807396, b: 0.35872662, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -135,7 +135,7 @@ GameObject:
   - component: {fileID: 6643783}
   - component: {fileID: 6643782}
   m_Layer: 5
-  m_Name: Right Eye
+  m_Name: Left Eye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -279,7 +279,7 @@ GameObject:
   - component: {fileID: 921047781}
   - component: {fileID: 921047780}
   m_Layer: 5
-  m_Name: Left Eye
+  m_Name: Right Eye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -623,8 +623,8 @@ MonoBehaviour:
   _shader: {fileID: 4800000, guid: cc0a1120a03754a469d6ac7f6cfe4947, type: 3}
   _mainUI: {fileID: 1554034519}
   _faceUI: {fileID: 213073568}
-  _leftEyeUI: {fileID: 921047780}
-  _rightEyeUI: {fileID: 6643782}
+  _leftEyeUI: {fileID: 6643782}
+  _rightEyeUI: {fileID: 921047780}
 --- !u!114 &2010591764
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -639,6 +639,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _deviceName: 
   _resolution: {x: 1080, y: 1080}
+  _dummyImage: {fileID: 2800000, guid: 4995dff642cc049a28c9d3427c1f0de4, type: 3}
 --- !u!4 &2010591765
 Transform:
   m_ObjectHideFlags: 0

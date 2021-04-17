@@ -9,7 +9,7 @@
   "dependencies": {
     "com.unity.ugui": "1.0.0",
     "com.unity.modules.audio": "1.0.0",
-    "jp.keijiro.mediapipe.blazeface": "1.1.0",
+    "jp.keijiro.mediapipe.blazeface": "1.1.1",
     "jp.keijiro.mediapipe.facemesh": "1.2.0",
     "jp.keijiro.mediapipe.iris": "1.1.0"
   }
