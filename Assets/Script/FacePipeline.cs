@@ -136,6 +136,7 @@ math.mul(float4x4.Translate(math.float3(1, 0, 0)), float4x4.Scale(math.float3(-1
     RenderTexture _irisCropL;
     RenderTexture _irisCropR;
 
+    ComputeBuffer _boundsBuffer;
     ComputeBuffer _refineBuffer;
     ComputeBuffer _eyeToFace;
 
@@ -158,6 +159,7 @@ math.mul(float4x4.Translate(math.float3(1, 0, 0)), float4x4.Scale(math.float3(-1
         _irisCropL = new RenderTexture(64, 64, 0);
         _irisCropR = new RenderTexture(64, 64, 0);
 
+        _boundsBuffer = new ComputeBuffer(1, sizeof(float) * 4);
         _refineBuffer = new ComputeBuffer(FaceLandmarkDetector.VertexCount,
                                           sizeof(float) * 4);
         _eyeToFace = IndexTable.CreateEyeToFaceLandmarkBuffer();
@@ -176,6 +178,7 @@ math.mul(float4x4.Translate(math.float3(1, 0, 0)), float4x4.Scale(math.float3(-1
         Object.Destroy(_irisCropL);
         Object.Destroy(_irisCropR);
 
+        _boundsBuffer.Dispose();
         _refineBuffer.Dispose();
         _eyeToFace.Dispose();
     }
@@ -222,17 +225,19 @@ math.mul(float4x4.Translate(math.float3(1, 0, 0)), float4x4.Scale(math.float3(-1
         // Face landmark refinement
         var refine = _resources.refinementCompute;
 
-        refine.SetBuffer(0, "_FaceVertices", _faceMesh.VertexBuffer);
-        refine.SetBuffer(0, "_RefineBuffer", _refineBuffer);
-        refine.SetMatrix("_FaceXForm", FaceCropMatrix);
-        refine.Dispatch(0, FaceLandmarkDetector.VertexCount / 52, 1, 1);
+        // Postprocess: Face Transformation
+        refine.SetMatrix("_fx_xform", FaceCropMatrix);
+        refine.SetBuffer(0, "_fx_input", _faceMesh.VertexBuffer);
+        refine.SetBuffer(0, "_fx_output", _refineBuffer);
+        refine.SetBuffer(0, "_fx_bounds", _boundsBuffer);
+        refine.Dispatch(0, 1, 1, 1);
 
-        refine.SetBuffer(1, "_EyeToFaceTable", _eyeToFace);
-        refine.SetBuffer(1, "_EyeVerticesL", _irisMeshL.VertexBuffer);
-        refine.SetBuffer(1, "_EyeVerticesR", _irisMeshR.VertexBuffer);
-        refine.SetMatrix("_EyeXFormL", LeftEyeCropMatrix);
-        refine.SetMatrix("_EyeXFormR", RightEyeCropMatrix);
-        refine.SetBuffer(1, "_RefineBuffer", _refineBuffer);
+        refine.SetBuffer(1, "_e2f_index_table", _eyeToFace);
+        refine.SetBuffer(1, "_e2f_eye_l", _irisMeshL.VertexBuffer);
+        refine.SetBuffer(1, "_e2f_eye_r", _irisMeshR.VertexBuffer);
+        refine.SetMatrix("_e2f_xform_l", LeftEyeCropMatrix);
+        refine.SetMatrix("_e2f_xform_r", RightEyeCropMatrix);
+        refine.SetBuffer(1, "_e2f_face", _refineBuffer);
         refine.Dispatch(1, 1, 1, 1);
 
         var angle = MathUtil.Angle(MidwayBetweenEyes - NoseTip) - math.PI / 2;
