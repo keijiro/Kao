@@ -20,40 +20,40 @@ StructuredBuffer<float4> _fx_input;
 float4x4 _fx_xform;
 
 RWStructuredBuffer<float4> _fx_output;
-RWStructuredBuffer<float4> _fx_bounds;
+RWStructuredBuffer<float4> _fx_bbox;
 
-groupshared float4 fx_box_agg[FX_THREAD_COUNT];
+groupshared float4 fx_bbox_agg[FX_THREAD_COUNT];
 
 [numthreads(FX_THREAD_COUNT, 1, 1)]
 void FaceTransformation(uint id : SV_DispatchThreadID)
 {
     uint ref = id * FX_VERTEX_PER_THREAD;
-    float4 box = float4(1, 1, 0, 0);
+    float4 bbox = float4(1, 1, 0, 0);
 
     // Transformation
     for (uint i = 0; i < FX_VERTEX_PER_THREAD; i++, ref++)
     {
         float4 p = mul(_fx_xform, float4(_fx_input[ref].xyz, 1));
-        box = float4(min(box.xy, p.xy), max(box.zw, p.xy));
+        bbox = float4(min(bbox.xy, p.xy), max(bbox.zw, p.xy));
         _fx_output[ref] = p;
     }
 
     // Per-thread bounding box
-    fx_box_agg[id] = box;
+    fx_bbox_agg[id] = bbox;
 
     // Only the first thread continues.
     if (id > 0) return;
 
     // Bounding box aggregation
-    box = fx_box_agg[0];
+    bbox = fx_bbox_agg[0];
 
     for (i = 1; i < FX_THREAD_COUNT; i++)
     {
-        box.xy = min(box.xy, fx_box_agg[i].xy);
-        box.zw = max(box.zw, fx_box_agg[i].zw);
+        bbox.xy = min(bbox.xy, fx_bbox_agg[i].xy);
+        bbox.zw = max(bbox.zw, fx_bbox_agg[i].zw);
     }
 
-    _fx_bounds[0] = box;
+    _fx_bbox[0] = bbox;
 }
 
 //

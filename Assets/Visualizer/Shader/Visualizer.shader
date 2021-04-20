@@ -1,4 +1,4 @@
-Shader "Hidden/Kao"
+Shader "Hidden/Kao/Visualizer"
 {
     CGINCLUDE
 

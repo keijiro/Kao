@@ -600,7 +600,7 @@ GameObject:
   - component: {fileID: 2010591764}
   - component: {fileID: 2010591763}
   m_Layer: 0
-  m_Name: Test
+  m_Name: Visualizer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -637,7 +637,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72730bf354752f54f987500737914501, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _deviceName: Video Assist 7" 12G HDR
+  _deviceName: 
   _resolution: {x: 1080, y: 1080}
   _dummyImage: {fileID: 0}
 --- !u!4 &2010591765

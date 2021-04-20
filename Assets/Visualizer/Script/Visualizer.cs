@@ -1,17 +1,16 @@
 using UnityEngine;
 using Unity.Mathematics;
-using System.Linq;
 using UI = UnityEngine.UI;
 
 namespace Kao {
 
-public sealed class WebcamTest : MonoBehaviour
+public sealed class Visualizer : MonoBehaviour
 {
     #region Editable attributes
 
     [SerializeField] WebcamInput _webcam = null;
-    [SerializeField] ResourceSet _resources = null;
     [Space]
+    [SerializeField] ResourceSet _resources = null;
     [SerializeField] Shader _shader = null;
     [Space]
     [SerializeField] UI.RawImage _mainUI = null;
@@ -44,6 +43,7 @@ public sealed class WebcamTest : MonoBehaviour
 
     void LateUpdate()
     {
+        // Processing on the face pipeline
         _pipeline.ProcessImage(_webcam.Texture);
 
         // UI update
@@ -55,8 +55,7 @@ public sealed class WebcamTest : MonoBehaviour
 
     void OnRenderObject()
     {
-        // Main view overlays
-
+        // Main view overlay
         // Face mesh
         var mF = float4x4.Translate(math.float3(-0.75f, -0.5f, 0));
         _material.SetBuffer("_Vertices", _pipeline.RefinedFaceVertexBuffer);
@@ -67,21 +66,21 @@ public sealed class WebcamTest : MonoBehaviour
 
         // Face mesh
         var dF = MathUtil.ScaleOffset(0.5f, math.float2(0.25f, 0));
-        _material.SetBuffer("_Vertices", _pipeline.FaceVertexBuffer);
+        _material.SetBuffer("_Vertices", _pipeline.RawFaceVertexBuffer);
         _material.SetPass(1);
         Graphics.DrawMeshNow(_resources.faceLineTemplate, dF);
 
         // Left eye
         var dLE = MathUtil.ScaleOffset(0.25f, math.float2(0.25f, -0.25f));
         _material.SetMatrix("_XForm", dLE);
-        _material.SetBuffer("_Vertices", _pipeline.LeftEyeVertexBuffer);
+        _material.SetBuffer("_Vertices", _pipeline.RawLeftEyeVertexBuffer);
         _material.SetPass(3);
         Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
 
         // Right eye
         var dRE = MathUtil.ScaleOffset(0.25f, math.float2(0.5f, -0.25f));
         _material.SetMatrix("_XForm", dRE);
-        _material.SetBuffer("_Vertices", _pipeline.RightEyeVertexBuffer);
+        _material.SetBuffer("_Vertices", _pipeline.RawRightEyeVertexBuffer);
         _material.SetPass(3);
         Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
     }

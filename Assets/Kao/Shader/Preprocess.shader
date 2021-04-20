@@ -1,4 +1,4 @@
-Shader "Hidden/Kao/Crop"
+Shader "Hidden/Kao/Preprocess"
 {
     Properties
     {

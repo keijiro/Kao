@@ -2,8 +2,13 @@ using UnityEngine;
 
 namespace Kao {
 
+//
+// Vertex index table class mainly used to provide eye to face mesh vertex
+// transfer table
+//
 static class IndexTable
 {
+    // Create a compute buffer holding the eye-to-face transfer table.
     public static ComputeBuffer CreateEyeToFaceLandmarkBuffer()
     {
         var buffer = new ComputeBuffer(EyeToFaceLandmark.Length, sizeof(uint));
@@ -11,6 +16,7 @@ static class IndexTable
         return buffer;
     }
 
+    // Eye-to-face transfer table
     public static uint[] EyeToFaceLandmark =
     {
         // Left eye

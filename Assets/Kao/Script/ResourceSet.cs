@@ -14,8 +14,8 @@ public sealed class ResourceSet : ScriptableObject
     public MediaPipe.FaceMesh.ResourceSet faceMesh;
     public MediaPipe.Iris.ResourceSet iris;
 
-    public Shader cropShader;
-    public ComputeShader refinementCompute;
+    public Shader preprocessShader;
+    public ComputeShader postprocessCompute;
 
     public Mesh faceMeshTemplate;
     public Mesh faceLineTemplate;

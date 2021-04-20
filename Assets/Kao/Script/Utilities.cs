@@ -2,6 +2,9 @@ using Unity.Mathematics;
 
 namespace Kao {
 
+//
+// Miscellaneous math functions
+//
 static class MathUtil
 {
     public static float4x4 Mul
@@ -18,6 +21,10 @@ static class MathUtil
 
     public static float Angle(float2 v)
       => math.atan2(v.y, v.x);
+
+    public static float4x4 HorizontalFlip()
+      => math.mul(float4x4.Translate(math.float3(1, 0, 0)),
+                  float4x4.Scale(math.float3(-1, 1, 1)));
 
     public static float4x4 ZRotateAtCenter(float angle)
       => Mul(float4x4.Translate(math.float3(0.5f, 0.5f, 0)),
