@@ -25,6 +25,9 @@ readonly struct BoundingBox
       => math.mul(float4x4.Translate(math.float3(Min, 0)),
                   float4x4.Scale(math.float3(Max - Min, 1)));
 
+    public BoundingBox Squarified
+      => BoundingBox.CenterExtent(Center, math.cmax(Extent));
+
     #endregion
 
     #region Constructors and factory methods
@@ -38,8 +41,6 @@ readonly struct BoundingBox
     public static BoundingBox CenterExtent(float2 center, float2 extent)
       => new BoundingBox(center - extent, center + extent);
 
-    public static BoundingBox Squarify(BoundingBox b)
-      => BoundingBox.CenterExtent(b.Center, math.cmax(b.Extent));
 
     #endregion
 

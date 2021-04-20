@@ -10,8 +10,10 @@ namespace Kao {
 
 partial class FacePipeline
 {
+    // Face region (also used to refer the previous frame region)
     BoundingBox _faceRegion;
 
+    // Vertex retrieval from the face landmark detector
     float4 GetFaceVertex(int index)
       => _landmarkDetector.face.VertexArray.ElementAt(index);
 
@@ -25,8 +27,7 @@ partial class FacePipeline
         if (face.score < 0.5f) return;
 
         // Face region from the detection
-        var fromDetection = new BoundingBox(face);
-        fromDetection = BoundingBox.Squarify(fromDetection) * 1.75f;
+        var fromDetection = new BoundingBox(face).Squarified * 1.75f;
 
         // We prefer using the face region based on the previous face landmark
         // detection, but we have to use the one from the detection if the IOU
@@ -99,12 +100,7 @@ partial class FacePipeline
         post.Dispatch(1, 1, 1, 1);
 
         // Face region update
-        {
-            var temp = new float4[1];
-            _computeBuffer.bbox.GetData(temp);
-            _faceRegion = new BoundingBox(temp[0].xy, temp[0].zw);
-            _faceRegion = BoundingBox.Squarify(_faceRegion) * 1.5f;
-        }
+        _faceRegion = _computeBuffer.bbox.GetBoundingBoxData().Squarified * 1.5f;
     }
 }
 
