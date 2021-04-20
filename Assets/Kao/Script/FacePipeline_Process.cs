@@ -10,8 +10,9 @@ namespace Kao {
 
 partial class FacePipeline
 {
-    // Face region (also used to refer the previous frame region)
+    // Face region/angle (also used to refer the previous frame region)
     BoundingBox _faceRegion;
+    float _faceAngle;
 
     // Vertex retrieval from the face landmark detector
     float4 GetFaceVertex(int index)
@@ -26,21 +27,22 @@ partial class FacePipeline
         var face = _faceDetector.Detections.FirstOrDefault();
         if (face.score < 0.5f) return;
 
-        // Face region from the detection
-        var fromDetection = new BoundingBox(face).Squarified * 1.75f;
+        // Face region/angle from the detection
+        var fd_region = new BoundingBox(face).Squarified * 1.75f;
+        var fd_angle = MathUtil.Angle(face.nose - face.mouth) - math.PI / 2;
 
         // We prefer using the face region based on the previous face landmark
         // detection, but we have to use the one from the detection if the IOU
         // is too low.
-        if (BoundingBox.CalculateIOU(_faceRegion, fromDetection) < 0.5f)
-            _faceRegion = fromDetection;
-
-        // Face angle
-        var face_angle = MathUtil.Angle(face.nose - face.mouth) - math.PI / 2;
+        if (BoundingBox.CalculateIOU(fd_region, _faceRegion) < 0.5f)
+        {
+            _faceRegion = fd_region;
+            _faceAngle = fd_angle;
+        }
 
         // Face region matrix
         var face_mtx = math.mul(_faceRegion.CropMatrix,
-                                MathUtil.ZRotateAtCenter(face_angle));
+                                MathUtil.ZRotateAtCenter(_faceAngle));
 
         // Face region cropping
         _preprocess.SetMatrix("_Xform", face_mtx);
@@ -50,7 +52,7 @@ partial class FacePipeline
         _landmarkDetector.face.ProcessImage(_cropRT.face);
 
         // Key points from the face landmark
-        var nose_tip = math.mul(face_mtx, GetFaceVertex(1)).xy;
+        var mouth = math.mul(face_mtx, GetFaceVertex(13)).xy;
         var mid_eyes = math.mul(face_mtx, GetFaceVertex(168)).xy;
         var eye_l0 = math.mul(face_mtx, GetFaceVertex(33)).xy;
         var eye_l1 = math.mul(face_mtx, GetFaceVertex(133)).xy;
@@ -65,10 +67,10 @@ partial class FacePipeline
           ((eye_r0 + eye_r1) / 2, math.distance(eye_r0, eye_r1) * 1.2f);
 
         var eye_l_mtx = math.mul(eye_l_box.CropMatrix,
-                                 MathUtil.ZRotateAtCenter(face_angle));
+                                 MathUtil.ZRotateAtCenter(_faceAngle));
 
         var eye_r_mtx = MathUtil.Mul(eye_r_box.CropMatrix,
-                                     MathUtil.ZRotateAtCenter(face_angle),
+                                     MathUtil.ZRotateAtCenter(_faceAngle),
                                      MathUtil.HorizontalFlip());
 
         // Eye region cropping
@@ -108,6 +110,7 @@ partial class FacePipeline
 
         // Face region update
         _faceRegion = _computeBuffer.bbox.GetBoundingBoxData().Squarified * 1.5f;
+        _faceAngle = MathUtil.Angle(mid_eyes - mouth) - math.PI / 2;
     }
 }
 
