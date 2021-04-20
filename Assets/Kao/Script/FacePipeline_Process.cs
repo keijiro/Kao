@@ -24,8 +24,15 @@ partial class FacePipeline
         var face = _faceDetector.Detections.FirstOrDefault();
         if (face.score < 0.5f) return;
 
-        // Temp: Use the face detection as a face region.
-        _faceRegion = new BoundingBox(face) * 1.75f;
+        // Face region from the detection
+        var fromDetection = new BoundingBox(face);
+        fromDetection = BoundingBox.Squarify(fromDetection) * 1.75f;
+
+        // We prefer using the face region based on the previous face landmark
+        // detection, but we have to use the one from the detection if the IOU
+        // is too low.
+        if (BoundingBox.CalculateIOU(_faceRegion, fromDetection) < 0.5f)
+            _faceRegion = fromDetection;
 
         // Face angle
         var face_angle = MathUtil.Angle(face.nose - face.mouth) - math.PI / 2;
@@ -90,6 +97,14 @@ partial class FacePipeline
         post.SetMatrix("_e2f_xform_r", eye_r_mtx);
         post.SetBuffer(1, "_e2f_face", _computeBuffer.post);
         post.Dispatch(1, 1, 1, 1);
+
+        // Face region update
+        {
+            var temp = new float4[1];
+            _computeBuffer.bbox.GetData(temp);
+            _faceRegion = new BoundingBox(temp[0].xy, temp[0].zw);
+            _faceRegion = BoundingBox.Squarify(_faceRegion) * 1.5f;
+        }
     }
 }
 

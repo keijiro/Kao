@@ -7,24 +7,50 @@ namespace Kao {
 //
 readonly struct BoundingBox
 {
-    public readonly float2 Min { get; }
-    public readonly float2 Max { get; }
+    #region Storage member
 
-    public BoundingBox(float2 min, float2 max)
-      => (Min, Max) = (min, max);
+    public float2 Min { get; }
+    public float2 Max { get; }
 
-    public BoundingBox(in MediaPipe.BlazeFace.FaceDetector.Detection d)
-      => (Min, Max) = (d.center - d.extent / 2, d.center + d.extent / 2);
+    #endregion
+
+    #region Accessor with calculation
+
+    public float2 Center => (Min + Max) * 0.5f;
+    public float2 Extent => (Max - Min) * 0.5f;
+
+    public bool IsZero => math.any(Min == 0) && math.any(Max == 0);
 
     public float4x4 CropMatrix
       => math.mul(float4x4.Translate(math.float3(Min, 0)),
                   float4x4.Scale(math.float3(Max - Min, 1)));
 
+    #endregion
+
+    #region Constructors and factory methods
+
+    public BoundingBox(float2 min, float2 max)
+      => (Min, Max) = (min, max);
+
+    public BoundingBox(in MediaPipe.BlazeFace.FaceDetector.Detection d)
+      => (Min, Max) = (d.center - d.extent * 0.5f, d.center + d.extent * 0.5f);
+
     public static BoundingBox CenterExtent(float2 center, float2 extent)
       => new BoundingBox(center - extent, center + extent);
 
+    public static BoundingBox Squarify(BoundingBox b)
+      => BoundingBox.CenterExtent(b.Center, math.cmax(b.Extent));
+
+    #endregion
+
+    #region Operator overloading
+
     public static BoundingBox operator * (BoundingBox b, float scale)
-      => CenterExtent((b.Min + b.Max) / 2, (b.Max - b.Min) * scale / 2);
+      => CenterExtent(b.Center, b.Extent * scale);
+
+    #endregion
+
+    #region Math operations
 
     public static float CalculateIOU(BoundingBox b1, BoundingBox b2)
     {
@@ -37,6 +63,8 @@ readonly struct BoundingBox
 
         return areaInner / (area0 + area1 - areaInner);
     }
+
+    #endregion
 }
 
 } // namespace Kao
