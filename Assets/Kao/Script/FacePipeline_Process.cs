@@ -99,6 +99,13 @@ partial class FacePipeline
         post.SetBuffer(1, "_e2f_face", _computeBuffer.post);
         post.Dispatch(1, 1, 1, 1);
 
+        post.SetBuffer(2, "_lpf_input", _computeBuffer.post);
+        post.SetBuffer(2, "_lpf_output", _computeBuffer.filter);
+        post.SetFloat("_lpf_beta", 2.0f);
+        post.SetFloat("_lpf_cutoff_min", 5.0f);
+        post.SetFloat("_lpf_t_e", Time.deltaTime);
+        post.Dispatch(2, 468 / 52, 1, 1);
+
         // Face region update
         _faceRegion = _computeBuffer.bbox.GetBoundingBoxData().Squarified * 1.5f;
     }

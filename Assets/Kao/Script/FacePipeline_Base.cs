@@ -28,6 +28,7 @@ sealed partial class FacePipeline : System.IDisposable
      RenderTexture eyeR) _cropRT;
 
     (ComputeBuffer post,
+     ComputeBuffer filter,
      ComputeBuffer bbox,
      ComputeBuffer eyeToFace) _computeBuffer;
 
@@ -52,9 +53,10 @@ sealed partial class FacePipeline : System.IDisposable
                    new RenderTexture(64, 64, 0),
                    new RenderTexture(64, 64, 0));
 
+        var faceVCount = FaceLandmarkDetector.VertexCount;
         _computeBuffer =
-          (new ComputeBuffer(FaceLandmarkDetector.VertexCount,
-                             sizeof(float) * 4),
+          (new ComputeBuffer(faceVCount, sizeof(float) * 4),
+           new ComputeBuffer(faceVCount * 2, sizeof(float) * 4),
            new ComputeBuffer(1, sizeof(float) * 4),
            IndexTable.CreateEyeToFaceLandmarkBuffer());
     }
@@ -74,6 +76,7 @@ sealed partial class FacePipeline : System.IDisposable
         Object.Destroy(_cropRT.eyeR);
 
         _computeBuffer.post.Dispose();
+        _computeBuffer.filter.Dispose();
         _computeBuffer.bbox.Dispose();
         _computeBuffer.eyeToFace.Dispose();
     }

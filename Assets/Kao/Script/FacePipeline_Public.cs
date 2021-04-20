@@ -20,7 +20,7 @@ partial class FacePipeline
       => _landmarkDetector.eyeR.VertexBuffer;
 
     public ComputeBuffer RefinedFaceVertexBuffer
-      => _computeBuffer.post;
+      => _computeBuffer.filter;
 
     #endregion
 

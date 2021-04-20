@@ -4,6 +4,7 @@
 
 #pragma kernel FaceTransformation
 #pragma kernel EyesToFaceRefinement
+#pragma kernel LowPassFilter
 
 //
 // Kernel 0 - FaceTransformation
@@ -80,4 +81,42 @@ void EyesToFaceRefinement(uint id : SV_DispatchThreadID)
 
     _e2f_face[i_l].xy = mul(_e2f_xform_l, float4(_e2f_eye_l[id + 5].xy, 0, 1)).xy;
     _e2f_face[i_r].xy = mul(_e2f_xform_r, float4(_e2f_eye_r[id + 5].xy, 0, 1)).xy;
+}
+
+//
+// Kernel 2 - LowPassFilter
+//
+// Low pass filter for vertex positions
+//
+
+#define LPF_VERTEX_COUNT 468
+
+StructuredBuffer<float4> _lpf_input;
+RWStructuredBuffer<float4> _lpf_output;
+
+float _lpf_beta;
+float _lpf_cutoff_min;
+float _lpf_t_e;
+
+float lpf_alpha(float cutoff)
+{
+    float r = 2 * 3.141592 * cutoff * _lpf_t_e;
+    return r / (r + 1);
+}
+
+[numthreads(52, 1, 1)]
+void LowPassFilter(uint id : SV_DispatchThreadID)
+{
+    float3 x = _lpf_input[id].xyz;
+    float3 p_x = _lpf_output[id].xyz;
+    float3 p_dx = _lpf_output[id + LPF_VERTEX_COUNT].xyz;
+
+    float3 dx = (x - p_x) / _lpf_t_e;
+    float3 dx_res = lerp(p_dx, dx, lpf_alpha(1));
+
+    float cutoff = _lpf_cutoff_min + _lpf_beta * length(dx_res);
+    float3 x_res = lerp(p_x, x, lpf_alpha(cutoff));
+
+    _lpf_output[id] = float4(x_res, 1);
+    _lpf_output[id + LPF_VERTEX_COUNT] = float4(dx_res, 1);
 }
