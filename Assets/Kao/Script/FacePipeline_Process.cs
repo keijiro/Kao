@@ -28,7 +28,7 @@ partial class FacePipeline
         if (face.score < 0.5f) return;
 
         // Face region/angle from the detection
-        var fd_region = new BoundingBox(face).Squarified * 1.75f;
+        var fd_region = new BoundingBox(face).Squarified * 1.5f;
         var fd_angle = MathUtil.Angle(face.nose - face.mouth) - math.PI / 2;
 
         // We prefer using the face region based on the previous face landmark
