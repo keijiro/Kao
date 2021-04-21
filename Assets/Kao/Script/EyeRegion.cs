@@ -5,19 +5,38 @@ namespace Kao {
 //
 // Eye region calculator class
 //
-static class EyeRegion
+
+sealed class EyeRegion
 {
-    public static float4x4
-      CropMatrix(float2 p0, float2 p1, float4x4 rotation, bool flip)
+    #region Exposed proeprties
+
+    public float4x4 CropMatrix { get; private set; }
+
+    #endregion
+
+    #region Internal state
+
+    bool _flipped;
+
+    #endregion
+
+    #region Public method
+
+    public EyeRegion(bool flipped = false)
+      => _flipped = flipped;
+
+    public void Update(float2 p0, float2 p1, float4x4 rotation)
     {
         var box = BoundingBox.CenterExtent
-          ((p0 + p1) / 2, math.distance(p0, p1) * 1.2f);
+          ((p0 + p1) / 2, math.distance(p0, p1) * 1.4f);
 
-        var mtx = math.mul(box.CropMatrix, rotation);
-        if (flip) mtx = math.mul(mtx, MathUtil.HorizontalFlip());
+        CropMatrix = math.mul(box.CropMatrix, rotation);
 
-        return mtx;
+        if (_flipped)
+            CropMatrix = math.mul(CropMatrix, MathUtil.HorizontalFlip());
     }
+
+    #endregion
 }
 
 } // namespace Kao

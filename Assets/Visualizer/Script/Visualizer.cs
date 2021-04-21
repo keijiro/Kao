@@ -56,29 +56,48 @@ public sealed class Visualizer : MonoBehaviour
     void OnRenderObject()
     {
         // Main view overlay
-        // Face mesh
-        var mF = float4x4.Translate(math.float3(-0.75f, -0.5f, 0));
+        var mv = float4x4.Translate(math.float3(-0.875f, -0.5f, 0));
         _material.SetBuffer("_Vertices", _pipeline.RefinedFaceVertexBuffer);
         _material.SetPass(1);
-        Graphics.DrawMeshNow(_resources.faceLineTemplate, mF);
+        Graphics.DrawMeshNow(_resources.faceLineTemplate, mv);
+
+        // Face view
+        // Face mesh
+        var fF = MathUtil.ScaleOffset(0.5f, math.float2(0.125f, -0.5f));
+        _material.SetBuffer("_Vertices", _pipeline.RefinedFaceVertexBuffer);
+        _material.SetPass(0);
+        Graphics.DrawMeshNow(_resources.faceMeshTemplate, fF);
+
+        // Left eye
+        var fLE = math.mul(fF, _pipeline.LeftEyeCropMatrix);
+        _material.SetMatrix("_XForm", fLE);
+        _material.SetBuffer("_Vertices", _pipeline.RawLeftEyeVertexBuffer);
+        _material.SetPass(3);
+        Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
+
+        // Right eye
+        var fRE = math.mul(fF, _pipeline.RightEyeCropMatrix);
+        _material.SetMatrix("_XForm", fRE);
+        _material.SetBuffer("_Vertices", _pipeline.RawRightEyeVertexBuffer);
+        _material.SetPass(3);
+        Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
 
         // Debug views
-
         // Face mesh
-        var dF = MathUtil.ScaleOffset(0.5f, math.float2(0.25f, 0));
+        var dF = MathUtil.ScaleOffset(0.5f, math.float2(0.125f, 0));
         _material.SetBuffer("_Vertices", _pipeline.RawFaceVertexBuffer);
         _material.SetPass(1);
         Graphics.DrawMeshNow(_resources.faceLineTemplate, dF);
 
         // Left eye
-        var dLE = MathUtil.ScaleOffset(0.25f, math.float2(0.25f, -0.25f));
+        var dLE = MathUtil.ScaleOffset(0.25f, math.float2(0.625f, 0.25f));
         _material.SetMatrix("_XForm", dLE);
         _material.SetBuffer("_Vertices", _pipeline.RawLeftEyeVertexBuffer);
         _material.SetPass(3);
         Graphics.DrawProceduralNow(MeshTopology.Lines, 64, 1);
 
         // Right eye
-        var dRE = MathUtil.ScaleOffset(0.25f, math.float2(0.5f, -0.25f));
+        var dRE = MathUtil.ScaleOffset(0.25f, math.float2(0.625f, 0f));
         _material.SetMatrix("_XForm", dRE);
         _material.SetBuffer("_Vertices", _pipeline.RawRightEyeVertexBuffer);
         _material.SetPass(3);

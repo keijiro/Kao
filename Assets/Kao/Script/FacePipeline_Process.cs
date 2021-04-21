@@ -10,8 +10,10 @@ namespace Kao {
 
 partial class FacePipeline
 {
-    // Face region tracker
+    // Face/eye region trackers
     FaceRegion _faceRegion = new FaceRegion();
+    EyeRegion _leyeRegion = new EyeRegion();
+    EyeRegion _reyeRegion = new EyeRegion(true);
 
     // Vertex retrieval from the face landmark detector
     float4 GetFaceVertex(int index)
@@ -46,15 +48,15 @@ partial class FacePipeline
         var eye_r0   = _faceRegion.Transform(GetFaceVertex(362)).xy;
         var eye_r1   = _faceRegion.Transform(GetFaceVertex(263)).xy;
 
-        // Eye region crop matrices
-        var eye_l_mtx = EyeRegion.CropMatrix(eye_l0, eye_l1, _faceRegion.RotationMatrix, false);
-        var eye_r_mtx = EyeRegion.CropMatrix(eye_r0, eye_r1, _faceRegion.RotationMatrix, true);
+        // Eye region update
+        _leyeRegion.Update(eye_l0, eye_l1, _faceRegion.RotationMatrix);
+        _reyeRegion.Update(eye_r0, eye_r1, _faceRegion.RotationMatrix);
 
         // Eye region cropping
-        _preprocess.SetMatrix("_Xform", eye_l_mtx);
+        _preprocess.SetMatrix("_Xform", _leyeRegion.CropMatrix);
         Graphics.Blit(input, _cropRT.eyeL, _preprocess, 0);
 
-        _preprocess.SetMatrix("_Xform", eye_r_mtx);
+        _preprocess.SetMatrix("_Xform", _reyeRegion.CropMatrix);
         Graphics.Blit(input, _cropRT.eyeR, _preprocess, 0);
 
         // Eye landmark detection
@@ -73,8 +75,8 @@ partial class FacePipeline
         post.SetBuffer(1, "_e2f_index_table", _computeBuffer.eyeToFace);
         post.SetBuffer(1, "_e2f_eye_l", _landmarkDetector.eyeL.VertexBuffer);
         post.SetBuffer(1, "_e2f_eye_r", _landmarkDetector.eyeR.VertexBuffer);
-        post.SetMatrix("_e2f_xform_l", eye_l_mtx);
-        post.SetMatrix("_e2f_xform_r", eye_r_mtx);
+        post.SetMatrix("_e2f_xform_l", _leyeRegion.CropMatrix);
+        post.SetMatrix("_e2f_xform_r", _reyeRegion.CropMatrix);
         post.SetBuffer(1, "_e2f_face", _computeBuffer.post);
         post.Dispatch(1, 1, 1, 1);
 
@@ -86,7 +88,8 @@ partial class FacePipeline
         post.Dispatch(2, 468 / 52, 1, 1);
 
         // Face region update based on the postprocessed face mesh
-        _faceRegion.Step(_computeBuffer.bbox.GetBoundingBoxData(), mid_eyes - mouth);
+        _faceRegion.Step
+          (_computeBuffer.bbox.GetBoundingBoxData(), mid_eyes - mouth);
     }
 }
 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace Kao {
 
@@ -34,6 +35,19 @@ partial class FacePipeline
 
     public Texture CroppedRightEyeTexture
       => _cropRT.eyeR;
+
+    #endregion
+
+    #region Accessors for crop region matrices
+
+    public float4x4 FaceCropMatrix
+      => _faceRegion.CropMatrix;
+
+    public float4x4 LeftEyeCropMatrix
+      => _leyeRegion.CropMatrix;
+
+    public float4x4 RightEyeCropMatrix
+      => _reyeRegion.CropMatrix;
 
     #endregion
 
