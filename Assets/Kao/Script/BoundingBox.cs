@@ -18,6 +18,7 @@ readonly struct BoundingBox
 
     public float2 Center => (Min + Max) * 0.5f;
     public float2 Extent => (Max - Min) * 0.5f;
+    public float4 AsFloat4 => math.float4(Min, Max);
 
     public bool IsZero => math.any(Min == 0) && math.any(Max == 0);
 
@@ -35,12 +36,14 @@ readonly struct BoundingBox
     public BoundingBox(float2 min, float2 max)
       => (Min, Max) = (min, max);
 
+    public BoundingBox(float4 v)
+      => (Min, Max) = (v.xy, v.zw);
+
     public BoundingBox(in MediaPipe.BlazeFace.FaceDetector.Detection d)
       => (Min, Max) = (d.center - d.extent * 0.5f, d.center + d.extent * 0.5f);
 
     public static BoundingBox CenterExtent(float2 center, float2 extent)
       => new BoundingBox(center - extent, center + extent);
-
 
     #endregion
 
